@@ -5,18 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Store</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; color: #333; }
+        :root {
+            --bg: linear-gradient(160deg, #f2f2f2 0%, #eaeaea 100%);
+            --text: #333;
+            --panel-bg: #fff;
+            --panel-border: #eee;
+            --card-border: #e0e0e0;
+            --filter-bg: #f8f9fa;
+            --filter-border: #e9ecef;
+            --input-border: #dee2e6;
+            --input-bg: #fff;
+            --muted: #666;
+        }
+        body.dark {
+            --bg: linear-gradient(160deg, #1e1e1e 0%, #141414 100%);
+            --text: #e4e4e4;
+            --panel-bg: #2a2a2a;
+            --panel-border: #404040;
+            --card-border: #404040;
+            --filter-bg: #333;
+            --filter-border: #404040;
+            --input-border: #505050;
+            --input-bg: #252525;
+            --muted: #aaa;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); min-height: 100vh; margin: 0; padding: 20px; color: var(--text); }
         .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        
-        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
-        
+        .header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
+        .header-row h2 { margin: 0; }
+        .theme-toggle { background: var(--panel-bg); border: 1px solid var(--panel-border); color: var(--text); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .theme-toggle:hover { opacity: 0.9; }
+
+        .panel { background: var(--panel-bg); padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid var(--panel-border); padding-bottom: 10px; margin-top: 0; }
+
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-        .product-card { border: 1px solid #e0e0e0; padding: 15px; border-radius: 6px; text-align: center; transition: transform 0.2s; }
+        .product-card { border: 1px solid var(--card-border); padding: 15px; border-radius: 6px; text-align: center; transition: transform 0.2s; }
         .product-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .product-card img { max-width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 10px; }
         .product-price { font-weight: bold; color: #2ecc71; font-size: 1.2em; margin: 10px 0; }
-        
+
         button { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
         button:hover { background: #2980b9; }
         button.checkout { background: #2ecc71; width: 100%; margin-top: 15px; padding: 12px; font-size: 1.1em; }
@@ -24,17 +52,41 @@
         button.remove { background: #e74c3c; padding: 5px 10px; font-size: 0.9em; }
         button.remove:hover { background: #c0392b; }
 
-        .cart-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
-        
+        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 12px 14px; background: var(--filter-bg); border-radius: 6px; border: 1px solid var(--filter-border); margin-bottom: 15px; }
+        .filter-bar select, .filter-bar input { padding: 6px 8px; border: 1px solid var(--input-border); border-radius: 4px; font-size: 0.95em; background: var(--input-bg); color: var(--text); }
+        .filter-bar select { min-width: 100px; }
+        .filter-bar input[type="number"] { width: 90px; }
+        .filter-bar input[type="text"] { width: 120px; }
+
+        .cart-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding: 10px 0; }
+
         .orders-section { grid-column: 1 / -1; margin-top: 20px; }
-        .order-card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #3498db; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .order-card { background: var(--panel-bg); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #3498db; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Products Panel -->
         <div class="panel">
-            <h2>Available Products</h2>
+            <div class="header-row">
+                <h2>Available Products</h2>
+                <button type="button" class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">Dark mode</button>
+            </div>
+            <div class="filter-bar">
+                <select id="filter-tier">
+                    <option value="">All tiers</option>
+                    <option value="Budget">Budget</option>
+                    <option value="Standard">Standard</option>
+                    <option value="Plus">Plus</option>
+                    <option value="Pro">Pro</option>
+                    <option value="Premium">Premium</option>
+                </select>
+                <input type="number" id="filter-max" placeholder="Max price">
+                <input type="text" id="filter-search" placeholder="Search">
+                <button onclick="applyFilter()">Filter</button>
+                <button onclick="clearFilter()" style="background: #95a5a6;">Clear</button>
+            </div>
+            <p id="products-count" style="margin: 0 0 10px 0; font-size: 0.95em; color: var(--muted);"></p>
             <div id="products-container" class="products-grid">
                 Loading products...
             </div>
@@ -63,22 +115,29 @@
 
     <script>
         const API_URL = 'http://localhost:3000';
-        let allProducts = [];
+        let fullProductList = [];
+        let filteredProducts = [];
 
-        // Fetch and render products
-        async function loadProducts() {
+        async function loadProducts(queryParams = {}) {
             try {
-                const res = await fetch(`${API_URL}/products`);
-                allProducts = await res.json();
-                
+                const q = new URLSearchParams();
+                if (queryParams.tier) q.set('tier', queryParams.tier);
+                if (queryParams.maxPrice != null && queryParams.maxPrice !== '') q.set('maxPrice', queryParams.maxPrice);
+                if (queryParams.search) q.set('search', queryParams.search);
+                const url = q.toString() ? `${API_URL}/products?${q}` : `${API_URL}/products`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (!q.toString()) fullProductList = data;
+                filteredProducts = data;
+
+                document.getElementById('products-count').textContent = 'Showing ' + filteredProducts.length + ' products';
                 const container = document.getElementById('products-container');
                 container.innerHTML = '';
-                
-                allProducts.forEach(product => {
+                filteredProducts.forEach(product => {
                     container.innerHTML += `
                         <div class="product-card">
                             <img src="${product.image}" alt="${product.title}">
-                            <h3>${product.title}</h3>
+                            <h3>${product.title} – ${product.tier}</h3>
                             <p>${product.description}</p>
                             <div class="product-price">$${product.price}</div>
                             <button onclick="addToCart(${product.id})">Add to Cart</button>
@@ -112,14 +171,14 @@
                 let total = 0;
 
                 cartItems.forEach(item => {
-                    const product = allProducts.find(p => p.id === item.productId);
+                    const product = fullProductList.find(p => p.id === item.productId);
                     if (product) {
                         const subtotal = product.price * item.quantity;
                         total += subtotal;
                         container.innerHTML += `
                             <div class="cart-item">
                                 <div>
-                                    <strong>${product.title}</strong> x ${item.quantity}<br>
+                                    <strong>${product.title} – ${product.tier}</strong> x ${item.quantity}<br>
                                     <small>$${product.price} each</small>
                                 </div>
                                 <div>
@@ -157,8 +216,8 @@
                 orders.forEach(order => {
                     const date = new Date(order.createdAt).toLocaleString();
                     let itemsHtml = order.items.map(item => {
-                        const product = allProducts.find(p => p.id === item.productId);
-                        return product ? `${product.title} (x${item.quantity})` : `Product #${item.productId} (x${item.quantity})`;
+                        const product = fullProductList.find(p => p.id === item.productId);
+                        return product ? `${product.title} – ${product.tier} (x${item.quantity})` : `Product #${item.productId} (x${item.quantity})`;
                     }).join(', ');
 
                     container.innerHTML += `
@@ -202,9 +261,33 @@
             }
         }
 
-        // Initialization
+        function applyFilter() {
+            const tier = document.getElementById('filter-tier').value || undefined;
+            const max = document.getElementById('filter-max').value;
+            const search = document.getElementById('filter-search').value.trim();
+            loadProducts({ tier, maxPrice: max, search: search || undefined });
+        }
+
+        function clearFilter() {
+            document.getElementById('filter-tier').value = '';
+            document.getElementById('filter-max').value = '';
+            document.getElementById('filter-search').value = '';
+            loadProducts();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            document.getElementById('theme-toggle').textContent = isDark ? 'Light mode' : 'Dark mode';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+            document.getElementById('theme-toggle').textContent = 'Light mode';
+        }
+
         async function init() {
-            await loadProducts(); // Need products loaded first to map cart IDs to titles/prices
+            await loadProducts();
             await loadCart();
             await loadOrders();
         }

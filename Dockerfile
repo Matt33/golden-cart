@@ -16,8 +16,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy built application and production dependencies from builder
+# Copy built application, static assets, and production dependencies from builder
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
